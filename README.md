@@ -4,6 +4,8 @@ Full-stack React and Express app for connecting clients with artists and creativ
 
 ## Local Development
 
+Requires Node.js 20.x.
+
 1. Copy env examples as needed:
    - `backend/.env.example` to `backend/.env`
    - `frontend/.env.example` to `frontend/.env` if you need a custom API base

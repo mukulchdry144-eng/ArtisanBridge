@@ -1,4 +1,4 @@
-const reactPlugin = require("./frontend/node_modules/eslint-plugin-react");
+const reactPlugin = require("eslint-plugin-react");
 
 const browserGlobals = {
   alert: "readonly",

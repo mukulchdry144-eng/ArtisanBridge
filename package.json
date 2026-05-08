@@ -2,7 +2,7 @@
   "name": "final-project",
   "private": true,
   "engines": {
-    "node": ">=18"
+    "node": "20.x"
   },
   "scripts": {
     "install:all": "npm --prefix backend install && npm --prefix frontend install",
@@ -16,6 +16,8 @@
   "devDependencies": {
     "autoprefixer": "^10.5.0",
     "concurrently": "^9.2.1",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.37.5",
     "postcss": "^8.5.12",
     "tailwindcss": "^4.2.4"
   },
