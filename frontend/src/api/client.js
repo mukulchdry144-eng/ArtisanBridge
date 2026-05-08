@@ -1,4 +1,4 @@
-const API_BASE = String(process.env.REACT_APP_API_BASE || "").replace(/\/+$/, "");
+const API_BASE = String(import.meta.env.VITE_API_BASE || "").replace(/\/+$/, "");
 
 function getToken() {
   return localStorage.getItem("ab_token") || "";
