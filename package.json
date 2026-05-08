@@ -1,0 +1,25 @@
+{
+  "name": "final-project",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "backend:dev": "npm --prefix backend run dev",
+    "frontend:start": "npm --prefix frontend start",
+    "dev": "concurrently -n backend,frontend -c green,cyan \"npm --prefix backend run dev\" \"npm --prefix frontend start\"",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix backend start",
+    "seed:admin": "npm --prefix backend run seed:admin"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.5.0",
+    "concurrently": "^9.2.1",
+    "postcss": "^8.5.12",
+    "tailwindcss": "^4.2.4"
+  },
+  "dependencies": {
+    "react-router-dom": "^7.14.2"
+  }
+}

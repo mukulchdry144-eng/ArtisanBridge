@@ -1,0 +1,18 @@
+{
+  "counters": {
+    "userId": 1,
+    "todoId": 1,
+    "inquiryId": 1,
+    "emailId": 1,
+    "notificationId": 1,
+    "marketOrderId": 1,
+    "contactMessageId": 1
+  },
+  "users": [],
+  "todos": [],
+  "inquiries": [],
+  "emailLogs": [],
+  "notifications": [],
+  "marketOrders": [],
+  "contactMessages": []
+}
