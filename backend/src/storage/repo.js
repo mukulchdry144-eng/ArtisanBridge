@@ -2,6 +2,7 @@ const fileRepo = require("./fileRepo");
 const mongoRepo = require("./mongoRepo");
 
 let selected = null;
+let initPromise = null;
 
 function chooseRepo() {
   if (selected) return selected;
@@ -17,14 +18,23 @@ function chooseRepo() {
 }
 
 async function initStorage() {
-  const chosen = chooseRepo();
-  if (chosen.kind === "mongo") {
-    const dbName = process.env.MONGO_DB_NAME || "finalproject";
-    await mongoRepo.connect(process.env.MONGO_URI, dbName);
-    console.log(`Database: MongoDB connected (db=${dbName})`);
-  } else {
-    console.log("Database: file db.json (no MONGO_URI set)");
-  }
+  if (initPromise) return initPromise;
+
+  initPromise = (async () => {
+    const chosen = chooseRepo();
+    if (chosen.kind === "mongo") {
+      const dbName = process.env.MONGO_DB_NAME || "finalproject";
+      await mongoRepo.connect(process.env.MONGO_URI, dbName);
+      console.log(`Database: MongoDB connected (db=${dbName})`);
+    } else {
+      console.log("Database: file db.json (no MONGO_URI set)");
+    }
+  })().catch((err) => {
+    initPromise = null;
+    throw err;
+  });
+
+  return initPromise;
 }
 
 function getRepo() {

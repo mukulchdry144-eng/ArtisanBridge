@@ -6,6 +6,7 @@ const morgan = require("morgan");
 require("dotenv").config();
 
 const { getCorsOptions, isProduction } = require("./config");
+const { initStorage } = require("./storage/repo");
 const authRoutes = require("./routes/auth");
 const todosRoutes = require("./routes/todos");
 const adminRoutes = require("./routes/admin");
@@ -21,6 +22,15 @@ app.use(cors(getCorsOptions()));
 
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
+});
+
+app.use("/api", async (_req, _res, next) => {
+  try {
+    await initStorage();
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
 app.use("/api/auth", authRoutes);
