@@ -6,7 +6,7 @@ const morgan = require("morgan");
 require("dotenv").config();
 
 const { getCorsOptions, isProduction } = require("./config");
-const { initStorage } = require("./storage/repo");
+const { getStorageInfo, initStorage } = require("./storage/repo");
 const authRoutes = require("./routes/auth");
 const todosRoutes = require("./routes/todos");
 const adminRoutes = require("./routes/admin");
@@ -20,8 +20,17 @@ app.use(express.json({ limit: "1mb" }));
 
 app.use(cors(getCorsOptions()));
 
-app.get("/api/health", (req, res) => {
-  res.json({ ok: true, time: new Date().toISOString() });
+app.get("/api/health", async (req, res, next) => {
+  try {
+    await initStorage();
+    res.json({
+      ok: true,
+      time: new Date().toISOString(),
+      storage: getStorageInfo()
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 app.use("/api", async (_req, _res, next) => {
@@ -39,6 +48,10 @@ app.use("/api/inquiries", inquiryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/admin", adminRoutes);
 
+app.use("/api", (req, res) => {
+  res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl}` });
+});
+
 const buildDir = path.join(__dirname, "..", "..", "frontend", "build");
 const indexHtml = path.join(buildDir, "index.html");
 if (fs.existsSync(indexHtml)) {
@@ -54,7 +67,10 @@ if (fs.existsSync(indexHtml)) {
 // Error handler (last)
 app.use((err, req, res, _next) => {
   console.error(err);
-  res.status(500).json({ error: "Server error" });
+  const status = Number(err.status || err.statusCode || 500);
+  res.status(status >= 400 && status < 600 ? status : 500).json({
+    error: isProduction() ? "Server error" : err.message || "Server error"
+  });
 });
 
 module.exports = app;

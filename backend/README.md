@@ -8,9 +8,10 @@
 
 ## Database
 - Default local development: file database `data/db.json`
-- MongoDB (optional): set `MONGO_URI` in `backend/.env` and use `MONGO_DB_NAME=finalproject`
-- Force local file storage while testing: set `STORAGE_DRIVER=file`
+- MongoDB Atlas: set `MONGO_URI` in `backend/.env`, set `MONGO_DB_NAME=finalproject`, and use `STORAGE_DRIVER=mongo` (or leave `STORAGE_DRIVER` blank so Mongo is selected automatically when `MONGO_URI` exists)
+- Force local file storage while testing: set `STORAGE_DRIVER=file`; this intentionally ignores `MONGO_URI`
 - Production: use MongoDB and do not deploy local `data/db.json`
+- Verify the active Atlas connection and write path: `npm run check:mongo`
 
 Example MongoDB Atlas:
 ```

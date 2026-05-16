@@ -32,12 +32,17 @@ function getCorsOptions() {
   const configuredOrigins = splitEnvList(
     process.env.FRONTEND_ORIGINS || process.env.FRONTEND_ORIGIN
   );
-  const defaultOrigins = ["http://localhost:3000", "http://127.0.0.1:3000"];
+  const defaultOrigins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+  ];
   const allowedOrigins = configuredOrigins.length ? configuredOrigins : defaultOrigins;
 
   return {
     origin(origin, callback) {
-      if (!origin) return callback(null, false);
+      if (!origin) return callback(null, true);
       if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }

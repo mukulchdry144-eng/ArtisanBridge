@@ -8,8 +8,10 @@
     "node": "20.x"
   },
   "scripts": {
+    "check:mongo": "node scripts/checkMongo.js",
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "smoke:api": "node scripts/smokeApi.js",
     "seed:admin": "node scripts/seedAdmin.js"
   },
   "dependencies": {

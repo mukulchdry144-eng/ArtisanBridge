@@ -78,18 +78,23 @@ function monthLabel(date) {
   return date.toLocaleDateString("en", { month: "short" });
 }
 
+function isMongoId(value) {
+  return mongoose.Types.ObjectId.isValid(String(value || ""));
+}
+
 function getModels() {
   if (models) return models;
 
   const userSchema = new mongoose.Schema(
     {
-      email: { type: String, required: true, unique: true, index: true },
+      email: { type: String, required: true, unique: true, index: true, trim: true, lowercase: true },
       passwordHash: { type: String, required: true },
-      name: { type: String, default: "" },
-      role: { type: String, default: "client" },
-      status: { type: String, default: "active" },
+      name: { type: String, default: "", trim: true },
+      role: { type: String, enum: Array.from(ROLES), default: "client" },
+      status: { type: String, enum: Array.from(STATUSES), default: "active" },
       lastLoginAt: { type: Date },
-      createdAt: { type: Date, default: Date.now }
+      createdAt: { type: Date, default: Date.now },
+      updatedAt: { type: Date }
     },
     { versionKey: false }
   );
@@ -97,7 +102,7 @@ function getModels() {
   const todoSchema = new mongoose.Schema(
     {
       userId: { type: String, required: true, index: true },
-      title: { type: String, required: true },
+      title: { type: String, required: true, trim: true },
       completed: { type: Boolean, default: false },
       createdAt: { type: Date, default: Date.now },
       updatedAt: { type: Date }
@@ -107,15 +112,15 @@ function getModels() {
 
   const inquirySchema = new mongoose.Schema(
     {
-      name: { type: String, default: "" },
-      email: { type: String, required: true, index: true },
-      phone: { type: String, default: "" },
-      role: { type: String, default: "client" },
-      category: { type: String, default: "" },
-      budget: { type: String, default: "" },
-      timeline: { type: String, default: "" },
-      message: { type: String, default: "" },
-      status: { type: String, default: "new", index: true },
+      name: { type: String, default: "", trim: true },
+      email: { type: String, required: true, index: true, trim: true, lowercase: true },
+      phone: { type: String, default: "", trim: true },
+      role: { type: String, enum: Array.from(ROLES), default: "client" },
+      category: { type: String, default: "", trim: true },
+      budget: { type: String, default: "", trim: true },
+      timeline: { type: String, default: "", trim: true },
+      message: { type: String, default: "", trim: true },
+      status: { type: String, enum: Array.from(INQUIRY_STATUSES), default: "new", index: true },
       createdAt: { type: Date, default: Date.now },
       updatedAt: { type: Date }
     },
@@ -124,11 +129,11 @@ function getModels() {
 
   const emailLogSchema = new mongoose.Schema(
     {
-      to: { type: String, required: true, index: true },
-      subject: { type: String, default: "" },
+      to: { type: String, required: true, index: true, trim: true },
+      subject: { type: String, default: "", trim: true },
       body: { type: String, default: "" },
-      type: { type: String, default: "general", index: true },
-      status: { type: String, default: "queued", index: true },
+      type: { type: String, default: "general", index: true, trim: true },
+      status: { type: String, default: "queued", index: true, trim: true },
       error: { type: String, default: "" },
       userId: { type: String },
       inquiryId: { type: String },
@@ -139,10 +144,10 @@ function getModels() {
 
   const notificationSchema = new mongoose.Schema(
     {
-      title: { type: String, default: "" },
-      message: { type: String, default: "" },
-      type: { type: String, default: "info", index: true },
-      audience: { type: String, default: "admin", index: true },
+      title: { type: String, default: "", trim: true },
+      message: { type: String, default: "", trim: true },
+      type: { type: String, default: "info", index: true, trim: true },
+      audience: { type: String, default: "admin", index: true, trim: true },
       userId: { type: String },
       inquiryId: { type: String },
       readAt: { type: Date },
@@ -155,12 +160,12 @@ function getModels() {
     {
       clientId: { type: String, required: true, index: true },
       artistId: { type: String, required: true, index: true },
-      title: { type: String, required: true },
-      description: { type: String, default: "" },
-      category: { type: String, default: "" },
+      title: { type: String, required: true, trim: true },
+      description: { type: String, default: "", trim: true },
+      category: { type: String, default: "", trim: true },
       price: { type: Number, default: 0 },
-      status: { type: String, default: "requested", index: true },
-      deliveryDate: { type: String },
+      status: { type: String, enum: Array.from(ORDER_STATUSES), default: "requested", index: true },
+      deliveryDate: { type: String, trim: true },
       createdAt: { type: Date, default: Date.now },
       updatedAt: { type: Date }
     },
@@ -171,12 +176,12 @@ function getModels() {
     {
       clientId: { type: String, required: true, index: true },
       artistId: { type: String, required: true, index: true },
-      subject: { type: String, default: "Project inquiry" },
-      message: { type: String, required: true },
-      projectTitle: { type: String, default: "" },
-      budget: { type: String, default: "" },
-      timeline: { type: String, default: "" },
-      status: { type: String, default: "new", index: true },
+      subject: { type: String, default: "Project inquiry", trim: true },
+      message: { type: String, required: true, trim: true },
+      projectTitle: { type: String, default: "", trim: true },
+      budget: { type: String, default: "", trim: true },
+      timeline: { type: String, default: "", trim: true },
+      status: { type: String, enum: Array.from(CONTACT_STATUSES), default: "new", index: true },
       readAt: { type: Date },
       createdAt: { type: Date, default: Date.now },
       updatedAt: { type: Date }
@@ -499,11 +504,13 @@ function buildActivity({ users, todos, inquiries, emailLogs }) {
 
 async function findUserByEmail(email) {
   const { User } = getModels();
-  const doc = await User.findOne({ email }).lean(false);
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const doc = await User.findOne({ email: normalizedEmail }).lean(false);
   return mapUser(doc);
 }
 
 async function findUserById(userId) {
+  if (!isMongoId(userId)) return null;
   const { User } = getModels();
   const doc = await User.findById(userId).lean(false);
   return mapUser(doc);
@@ -550,6 +557,7 @@ async function upsertAdminUser({ email, passwordHash, name }) {
 }
 
 async function touchUserLogin(userId) {
+  if (!isMongoId(userId)) return;
   const { User } = getModels();
   await User.updateOne({ _id: userId }, { $set: { lastLoginAt: new Date() } });
 }
@@ -591,6 +599,7 @@ async function listInquiries({ search = "", status = "" } = {}) {
 }
 
 async function updateInquiryAdmin(inquiryId, { status }) {
+  if (!isMongoId(inquiryId)) return { notFound: true };
   const { Inquiry } = getModels();
   const update = {};
   if (status !== undefined) update.status = normalizeInquiryStatus(status);
@@ -666,10 +675,12 @@ async function listUsers({ search = "", role = "", status = "" } = {}) {
 }
 
 async function updateUserAdmin(userId, { role, status }) {
+  if (!isMongoId(userId)) return { notFound: true };
   const { User, Todo } = getModels();
   const update = {};
   if (role !== undefined) update.role = normalizeRole(role);
   if (status !== undefined) update.status = normalizeStatus(status);
+  update.updatedAt = new Date();
 
   const doc = await User.findByIdAndUpdate(userId, update, { new: true });
   if (!doc) return { notFound: true };
@@ -789,6 +800,7 @@ async function listArtists() {
 }
 
 async function createContactMessage(clientId, { artistId, subject, message, projectTitle, budget, timeline }) {
+  if (!isMongoId(artistId)) return { notFound: true };
   const { User, ContactMessage } = getModels();
   const artist = await User.findOne({ _id: artistId, role: "freelancer" });
   if (!artist) return { notFound: true };
@@ -813,6 +825,7 @@ async function createMarketOrder(
   clientId,
   { artistId, title, description, category, price, deliveryDate }
 ) {
+  if (!isMongoId(artistId)) return { notFound: true };
   const { User, MarketOrder } = getModels();
   const artist = await User.findOne({ _id: artistId, role: "freelancer" });
   if (!artist) return { notFound: true };
@@ -834,6 +847,7 @@ async function createMarketOrder(
 }
 
 async function updateMarketOrder(userId, orderId, { status }) {
+  if (!isMongoId(orderId)) return { notFound: true };
   const { MarketOrder } = getModels();
   const update = { updatedAt: new Date() };
   if (status !== undefined) update.status = normalizeOrderStatus(status);
@@ -853,6 +867,7 @@ async function updateMarketOrder(userId, orderId, { status }) {
 }
 
 async function markContactMessageRead(userId, messageId) {
+  if (!isMongoId(messageId)) return { notFound: true };
   const { ContactMessage } = getModels();
   const doc = await ContactMessage.findOneAndUpdate(
     { _id: messageId, artistId: String(userId) },
@@ -999,6 +1014,7 @@ async function createTodo(userId, title) {
 }
 
 async function updateTodo(userId, todoId, { title, completed }) {
+  if (!isMongoId(todoId)) return { notFound: true };
   const { Todo } = getModels();
   const update = {};
   if (title !== undefined) update.title = String(title).trim();
@@ -1013,6 +1029,7 @@ async function updateTodo(userId, todoId, { title, completed }) {
 }
 
 async function deleteTodo(userId, todoId) {
+  if (!isMongoId(todoId)) return { notFound: true };
   const { Todo } = getModels();
   const res = await Todo.deleteOne({ _id: todoId, userId });
   if (!res || res.deletedCount !== 1) return { notFound: true };
